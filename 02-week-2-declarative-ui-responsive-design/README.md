@@ -10,3 +10,8 @@ Eksperimen Layout (Bagian 5)
 3. Eksperimen perubahan layout di ipad pro dan iphone 14 pro max
 4. layout setelah penambahan semantics; tidak ada perubahan yang nampak setelah penambahan semantics
 
+AI-Prompt Challange:
+1. Layout yang dipilih adalah 'LayoutBuilder' dan kombinasi 'Row/Column' dibanding 'GridView'. Alasannya, dengan 'LayoutBuilder' memungkinkan tinggi kartu menyesuaikan konten secara otomatis pada target UI dan mencegah overflow ketika ukuran font dinaikkan
+2. Solusi Masalah Layout & Aksesibilitas has: 
+  * Layar < 700px (`kWideBreakpoint`): Tampilan 1 Kolom vertikal.
+  * Layar >= 700px (`kWideBreakpoint`): Tampilan 2 Kolom menggunakan kombinasi `Row` dan `Expanded`.

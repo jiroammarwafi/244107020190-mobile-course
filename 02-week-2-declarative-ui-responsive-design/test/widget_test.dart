@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:responsive_dashboard/main.dart';
+
+import '../tugas/tugas1.dart' show AcademicInfoCard, DashboardApp;
 
 void main() {
   testWidgets('Dashboard satu kolom di layar sempit', (tester) async {
@@ -10,7 +11,7 @@ void main() {
 
     await tester.pumpWidget(const DashboardApp());
 
-    final width = tester.getSize(find.byType(Card)).width;
+    final width = tester.getSize(find.byType(AcademicInfoCard).first).width;
     expect(width, lessThan(700));
   });
 
@@ -21,7 +22,7 @@ void main() {
 
     await tester.pumpWidget(const DashboardApp());
 
-    final width = tester.getSize(find.byType(Card)).width;
+    final width = tester.getSize(find.byType(AcademicInfoCard).first).width;
     expect(width, greaterThan(500));
   });
 }

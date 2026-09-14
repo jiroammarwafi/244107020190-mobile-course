@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+// 3. Konstanta breakpoint terpusat
+const double kWideBreakpoint = 700;
+
 void main() => runApp(const DashboardApp());
 
 class DashboardApp extends StatefulWidget {
@@ -56,21 +59,16 @@ class AcademicOverviewPage extends StatelessWidget {
         actions: [
           Row(
             children: [
-              // Sembunyikan ikon dekoratif dari screen reader
               ExcludeSemantics(
                 child: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
               ),
               const SizedBox(width: 4),
-              // Semantics untuk Switch pengubah tema
               Semantics(
                 label: 'Mode Gelap',
                 hint:
                     'Ketuk dua kali untuk mengubah ke ${isDark ? "Mode Terang" : "Mode Gelap"}',
                 toggled: isDark,
-                child: CupertinoSwitch(
-                  value: isDark,
-                  onChanged: onDarkChanged,
-                ),
+                child: CupertinoSwitch(value: isDark, onChanged: onDarkChanged),
               ),
               const SizedBox(width: 12),
             ],
@@ -82,24 +80,20 @@ class AcademicOverviewPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Header Profil
             const ProfileHeaderCard(),
             const SizedBox(height: 20),
-
             Text(
               'Ringkasan Akademik',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-
-            // 2. Layout Responsif (1 Kolom vs 2 Kolom) menggunakan Row, Column, & Expanded
             LayoutBuilder(
               builder: (context, constraints) {
-                final bool isWideScreen = constraints.maxWidth >= 600;
+                // 3. Menggunakan konstanta kWideBreakpoint
+                final bool isWideScreen =
+                    constraints.maxWidth >= kWideBreakpoint;
 
-                // Data 4 Kartu Informasi
                 final cards = [
                   const AcademicInfoCard(
                     title: 'IPK Kumulatif',
@@ -128,7 +122,6 @@ class AcademicOverviewPage extends StatelessWidget {
                 ];
 
                 if (isWideScreen) {
-                  // Layar Lebar: 2 Kolom (Menggunakan Row dan Expanded)
                   return Column(
                     children: [
                       Row(
@@ -149,7 +142,6 @@ class AcademicOverviewPage extends StatelessWidget {
                     ],
                   );
                 } else {
-                  // Layar Sempit: 1 Kolom (Menggunakan Column)
                   return Column(
                     children: [
                       cards[0],
@@ -171,7 +163,6 @@ class AcademicOverviewPage extends StatelessWidget {
   }
 }
 
-// Komponen Widget Header Profil
 class ProfileHeaderCard extends StatelessWidget {
   const ProfileHeaderCard({super.key});
 
@@ -190,10 +181,7 @@ class ProfileHeaderCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const CircleAvatar(
-              radius: 30,
-              child: Icon(Icons.person, size: 36),
-            ),
+            const CircleAvatar(radius: 30, child: Icon(Icons.person, size: 36)),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -206,10 +194,7 @@ class ProfileHeaderCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    'NIM: 244107020190',
-                    style: theme.textTheme.bodyMedium,
-                  ),
+                  Text('NIM: 244107020190', style: theme.textTheme.bodyMedium),
                   Text(
                     'Teknik Informatika',
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -227,7 +212,7 @@ class ProfileHeaderCard extends StatelessWidget {
   }
 }
 
-// Komponen Widget Kartu Informasi Akademik
+// 1. Widget Reusable AcademicInfoCard (InfoCard)
 class AcademicInfoCard extends StatelessWidget {
   const AcademicInfoCard({
     required this.title,
@@ -252,18 +237,17 @@ class AcademicInfoCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
+          // 2. Menggunakan warna dinamis dari theme
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12.0),
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant,
-          ),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 24),
