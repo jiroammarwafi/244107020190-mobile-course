@@ -1,58 +1,40 @@
-# Dokumentasi Verifikasi AI
+# Dokumentasi AI Challenge
 
-## Prompt yang Digunakan
+## Prompt
 
-> Buatkan halaman Flutter bernama StatsPage menggunakan flutter_riverpod.
-> Requirements:
-> - ConsumerWidget dengan satu AsyncNotifierProvider yang mensimulasikan
->   pengambilan data statistik (delay 2 detik, kadang gagal 30%).
-> - UI harus menangani loading (spinner), error (pesan + tombol retry),
->   dan success (ListView 3 item).
-> - Berikan unit test untuk notifier-nya.
-> Jelaskan setiap bagian kode dalam komentar.
+> Bangun aplikasi ToDo Flutter untuk tugas minggu ke-3 dengan minimal dua halaman menggunakan GoRouter. Kelola daftar tugas dengan Riverpod Notifier dan ConsumerWidget. Tambahkan halaman statistik yang memakai AsyncValue dengan simulasi loading dua detik, kemungkinan error, data success, dan tombol retry. Sertakan widget test dan dokumentasikan alasan keputusan teknis.
 
 ## Output Awal AI
 
-AI menambahkan `StatsNotifier` berbasis `AsyncNotifier`, `statsProvider`,
-`StatsPage` berbasis `ConsumerWidget`, serta unit test untuk kondisi sukses dan
-error. Halaman utama proyek `week3_todo` diarahkan ke `StatsPage`, dan komentar
-ditambahkan pada bagian penting kode.
+AI menghasilkan provider ToDo berbasis `Notifier`, halaman ToDo dengan filter,
+routing `StatefulShellRoute.indexedStack`, serta `StatsNotifier` berbasis
+`AsyncNotifier`. Halaman statistik merender `loading`, `error`, dan `data`
+melalui `AsyncValue.when()`.
 
 ## Perbaikan yang Dilakukan
 
-1. Dependency angka acak dibuat menjadi callback `double Function()` agar test
-   dapat menentukan hasil sukses atau gagal tanpa mewarisi interface `Random`
-   dari SDK Dart.
-2. Delay dapat diinjeksi sehingga test memakai `Duration.zero`, sementara
-   perilaku aplikasi tetap delay dua detik.
-3. Test error membaca `AsyncValue` setelah event loop berjalan. Ini menghindari
-   error lifecycle internal ketika `ProviderContainer` dibuang sebelum
-   `AsyncNotifier` selesai mengubah state.
-4. Test counter bawaan diganti menjadi smoke test `StatsPage` yang membungkus
-   widget dengan `ProviderScope`. Test lama tidak sesuai dengan aplikasi dan
-   sebelumnya gagal karena tidak ada provider scope serta tidak ada counter.
-5. Checklist verifikasi ditambahkan ke README minggu ini.
+1. Dependency angka acak dan durasi delay pada `StatsNotifier` dibuat dapat diinjeksi. Produksi tetap memakai delay dua detik dan peluang error 30%, sedangkan test dapat berjalan deterministik tanpa menunggu lama.
+2. Test widget utama diperbarui dari test counter bawaan Flutter menjadi test tambah tugas dan test navigasi ke halaman statistik.
+3. Test navigasi memajukan fake clock dua detik agar timer simulasi asynchronous selesai sebelum teardown.
+4. Assertion test navigasi disesuaikan karena teks `Statistik` tampil di AppBar dan NavigationBar.
+5. README portfolio ditulis ulang agar tujuan, fitur, stack, cara menjalankan, hasil, dan bukti verifikasi terdokumentasi.
 
-## Hasil Testing
+## Keputusan Teknis
 
-Perintah yang dijalankan dari folder `week3_todo`:
+- `Notifier<List<Todo>>` dipilih karena operasi tambah, toggle, hapus, dan filter membutuhkan state sinkron yang immutable.
+- `AsyncNotifier<List<String>>` dipilih untuk merepresentasikan lifecycle request tanpa membuat enum status manual.
+- `ConsumerWidget` digunakan agar UI membaca provider melalui `WidgetRef` dan mudah diuji dengan `ProviderScope`.
+- `StatefulShellRoute.indexedStack` dipakai agar dua tab mempertahankan state navigasinya ketika pengguna berpindah halaman.
 
-```text
-flutter analyze
-No issues found!
+## Checklist Verifikasi
 
-flutter test
-00:02 +3: All tests passed!
-```
-
-Pada percobaan awal setelah test counter diganti, test menemukan timer delay
-dua detik yang masih tertinggal. Test kemudian diperbaiki dengan menunggu delay
-notifier sebelum teardown. Hasil final di atas mencakup dua unit test notifier:
-data berhasil dan simulasi error 30%, serta satu widget smoke test untuk state
-loading `StatsPage`.
-
-## Kesimpulan
-
-Kode memenuhi checklist: state tidak dimutasi langsung, provider bertipe
-eksplisit dan tunggal, tiga state `AsyncValue` ditangani, serta API Riverpod
-yang dipakai adalah `AsyncNotifier` dan `ConsumerWidget`.
+| Pemeriksaan | Hasil |
+| --- | --- |
+| Dua halaman GoRouter | Lulus: ToDo dan Statistik |
+| Riverpod Notifier | Lulus: daftar/filter ToDo memakai `Notifier` |
+| ConsumerWidget | Lulus: `MyApp`, `TodoPage`, dan `StatsPage` |
+| AsyncValue loading | Lulus: `CircularProgressIndicator` |
+| AsyncValue error | Lulus: pesan error dan tombol `Coba lagi` |
+| AsyncValue success | Lulus: tiga item statistik |
+| Widget test | Lulus: `flutter test` menghasilkan `+2: All tests passed!` |
+| Static analysis | Dijalankan pada validasi akhir |
