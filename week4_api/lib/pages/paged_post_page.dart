@@ -55,6 +55,18 @@ class _PagedPostPageState extends ConsumerState<PagedPostPage> {
         ),
       );
     }
+    if (state.isLoadingFirstPage && state.items.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Posts Paged')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (!state.isLoadingFirstPage && state.items.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Posts Paged')),
+        body: const Center(child: Text('Belum ada data dari server.')),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Posts Paged')),
       body: ListView.builder(
@@ -66,6 +78,22 @@ class _PagedPostPageState extends ConsumerState<PagedPostPage> {
               return const Padding(
                 padding: EdgeInsets.all(16),
                 child: Center(child: Text('Semua data termuat.')),
+              );
+            }
+            if (state.error != null) {
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text(friendlyErrorMessage(state.error!)),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () =>
+                          ref.read(pagedPostsProvider.notifier).loadNextPage(),
+                      child: const Text('Coba muat lagi'),
+                    ),
+                  ],
+                ),
               );
             }
             return const Padding(
