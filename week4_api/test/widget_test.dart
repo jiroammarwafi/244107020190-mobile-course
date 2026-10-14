@@ -10,23 +10,43 @@ import 'package:week4_api/main.dart';
 class _FakePostRepository extends PostRepository {
   _FakePostRepository() : super(Dio());
 
+  final post = const Post(
+    userId: 1,
+    id: 7,
+    title: 'Judul lengkap',
+    body: 'Isi lengkap post untuk halaman detail.',
+  );
+  var fetchPostCalls = 0;
+
   @override
   Future<List<Post>> fetchPostsPage({required int page, int limit = 10}) async {
-    return [];
+    return [post];
+  }
+
+  @override
+  Future<Post> fetchPost(int id) async {
+    fetchPostCalls++;
+    return post;
   }
 }
 
 void main() {
-  testWidgets('app displays the paged posts screen', (tester) async {
+  testWidgets('opens complete post detail from the paged list', (tester) async {
+    final repository = _FakePostRepository();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          postRepositoryProvider.overrideWith((ref) => _FakePostRepository()),
-        ],
+        overrides: [postRepositoryProvider.overrideWith((ref) => repository)],
         child: const MyApp(),
       ),
     );
+    await tester.pumpAndSettle();
 
     expect(find.text('Posts Paged'), findsOneWidget);
+    await tester.tap(find.text('Judul lengkap'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Judul lengkap'), findsOneWidget);
+    expect(find.text('Isi lengkap post untuk halaman detail.'), findsOneWidget);
+    expect(repository.fetchPostCalls, 0);
   });
 }

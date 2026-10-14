@@ -6,6 +6,15 @@ class PostRepository {
   PostRepository(this._dio);
   final Dio _dio;
 
+  Future<Post> fetchPost(int id) async {
+    final response = await _dio.get<Map<String, dynamic>>('/posts/$id');
+    final data = response.data;
+    if (data == null) {
+      throw StateError('The server returned an empty post response.');
+    }
+    return Post.fromJson(data);
+  }
+
   Future<List<Post>> fetchPosts() async {
     final response = await _dio.get<List>('/posts');
     final data = response.data ?? [];
