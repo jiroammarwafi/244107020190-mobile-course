@@ -1,17 +1,18 @@
-# week5_offline_notes
+# Week 5: Offline-first notes
 
-A new Flutter project.
+Flutter sample demonstrating local SQLite storage, cache-first API reads, and
+simulated synchronization of dirty notes.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- The **Posts API** tab reads `cached_posts` from SQLite first, then fetches
+  `GET /posts` from JSONPlaceholder in the background and replaces the cache.
+  If the request fails, cached results remain visible and the error is shown.
+- The **Catatan** tab supports creating, editing, and deleting local notes.
+  New and edited notes are marked dirty.
+- **Sinkronkan catatan** simulates a server upload with a one-second delay,
+  then marks dirty notes as synced. This exercise does not configure a write
+  backend.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance, development on mobile, and a full API reference.
+Run the app from this directory with `flutter pub get` followed by
+`flutter run`. Run checks with `flutter analyze` and `flutter test`.

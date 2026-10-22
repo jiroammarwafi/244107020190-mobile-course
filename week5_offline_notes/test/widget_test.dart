@@ -1,30 +1,60 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:sqflite/sqflite.dart';
+import 'package:week5_offline_notes/data/local/note.dart';
+import 'package:week5_offline_notes/data/models/post.dart';
+import 'package:week5_offline_notes/data/providers.dart';
+import 'package:week5_offline_notes/data/repositories/note_repository.dart';
+import 'package:week5_offline_notes/data/repositories/posts_repository.dart';
 import 'package:week5_offline_notes/main.dart';
 
+class _FakeNoteRepository extends NoteRepository {
+  _FakeNoteRepository() : super(openDb: _unusedDb);
+
+  static Future<Database> _unusedDb() =>
+      throw UnsupportedError('The test must not open SQLite');
+
+  @override
+  Future<List<Note>> fetchNotes() async => [];
+}
+
+class _FakePostsRepository extends PostsRepository {
+  _FakePostsRepository() : super(dio: Dio(), openDb: _unusedDb);
+
+  static Future<Database> _unusedDb() =>
+      throw UnsupportedError('The test must not open SQLite');
+
+  @override
+  Future<List<Post>> readCachedPosts() async => [];
+
+  @override
+  Future<List<Post>> fetchPosts() async => [];
+
+  @override
+  Future<void> savePosts(List<Post> posts) async {}
+}
+
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('shows the offline notes and API tabs', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          noteRepositoryProvider.overrideWithValue(_FakeNoteRepository()),
+          postsRepositoryProvider.overrideWithValue(_FakePostsRepository()),
+        ],
+        child: const MyApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Posts API'), findsOneWidget);
+    expect(find.text('Catatan'), findsNWidgets(2));
+    await tester.tap(find.text('Catatan').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Belum ada catatan. Tambahkan catatan baru.'),
+      findsOneWidget,
+    );
   });
 }

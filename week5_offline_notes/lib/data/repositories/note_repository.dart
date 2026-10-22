@@ -38,6 +38,16 @@ class NoteRepository {
     await db.delete('notes', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<void> updateNote(Note note) async {
+    final id = note.id;
+    if (id == null) {
+      throw ArgumentError.value(note, 'note', 'A saved note must have an id');
+    }
+    final db = await _openDb();
+    final values = note.toMap()..remove('id');
+    await db.update('notes', values, where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<int> countDirty() async {
     final db = await _openDb();
     final rows = await db.rawQuery(
