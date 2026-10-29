@@ -1,8 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'data/local/note.dart';
 import 'data/providers.dart';
+import 'pages/note_detail_page.dart';
+import 'widgets/note_tile.dart';
+
+final router = GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const NotesHomePage(),
+    ),
+    GoRoute(
+      path: '/note/:id',
+      builder: (context, state) {
+        final id = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+        return NoteDetailPage(noteId: id);
+      },
+    ),
+  ],
+);
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -13,10 +33,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Offline Notes',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.teal)),
-      home: const NotesHomePage(),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        useMaterial3: true,
+      ),
+      routerConfig: router,
     );
   }
 }
@@ -131,8 +155,9 @@ class NotesHomePage extends ConsumerWidget {
       );
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Sinkronisasi gagal: $error')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Sinkronisasi gagal: $error')));
     }
   }
 
@@ -357,20 +382,16 @@ class NotesTab extends ConsumerWidget {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final note = items[index];
-                return ListTile(
+                return NoteTile(
                   key: Key('note-${note.id}'),
-                  title: Text(note.title),
-                  subtitle: Text(
-                    '${note.body.isEmpty ? 'Tanpa isi' : note.body}'
-                    '${note.dirty ? ' • Belum disinkronkan' : ' • Tersinkron'}',
-                    maxLines: 2,
-                  ),
-                  onTap: () => onEdit(note),
-                  trailing: IconButton(
-                    tooltip: 'Hapus catatan',
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => onDelete(note),
-                  ),
+                  note: note,
+                  onTap: () {
+                    if (note.id != null) {
+                      context.push('/note/${note.id}');
+                    }
+                  },
+                  onEdit: () => onEdit(note),
+                  onDelete: () => onDelete(note),
                 );
               },
             ),

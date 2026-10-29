@@ -8,7 +8,7 @@ import 'local/note.dart';
 import 'models/post.dart';
 import 'repositories/note_repository.dart';
 import 'repositories/posts_repository.dart';
-import 'sync_notes.dart';
+import 'sync.dart';
 
 final dioProvider = Provider<Dio>((ref) => createDio());
 
@@ -24,8 +24,14 @@ final postsRepositoryProvider = Provider<PostsRepository>(
   (ref) => PostsRepository(dio: ref.watch(dioProvider)),
 );
 
+final singleNoteProvider = FutureProvider.family<Note?, int>((ref, id) {
+  final repository = ref.watch(noteRepositoryProvider);
+  return repository.getNoteById(id);
+});
+
 final notesProvider = AsyncNotifierProvider<NotesNotifier, List<Note>>(
   NotesNotifier.new,
+  retry: (retryCount, error) => null,
 );
 
 final postsProvider = AsyncNotifierProvider<PostsNotifier, PostsFeedState>(
@@ -54,12 +60,16 @@ class NotesNotifier extends AsyncNotifier<List<Note>> {
   Future<void> updateNote(Note note) async {
     final repository = ref.read(noteRepositoryProvider);
     await repository.updateNote(note);
+    if (note.id != null) {
+      ref.invalidate(singleNoteProvider(note.id!));
+    }
     state = AsyncData(await repository.fetchNotes());
   }
 
   Future<void> deleteNote(int id) async {
     final repository = ref.read(noteRepositoryProvider);
     await repository.deleteNote(id);
+    ref.invalidate(singleNoteProvider(id));
     state = AsyncData(await repository.fetchNotes());
   }
 
@@ -91,7 +101,8 @@ class PostsNotifier extends AsyncNotifier<PostsFeedState> {
   Future<PostsFeedState> build() async {
     final repository = ref.watch(postsRepositoryProvider);
     final forceOffline = ref.watch(forceOfflineProvider);
-    final cached = await repository.readCachedPosts();
+    final syncService = PostsSyncService(repository);
+    final cached = await syncService.loadCache();
     if (forceOffline) return PostsFeedState(posts: cached);
 
     unawaited(_refreshInBackground(repository));
@@ -114,9 +125,9 @@ class PostsNotifier extends AsyncNotifier<PostsFeedState> {
     if (ref.read(forceOfflineProvider)) return;
 
     try {
-      final latest = await repository.fetchPosts();
+      final syncService = PostsSyncService(repository);
+      final latest = await syncService.fetchAndCache();
       if (ref.read(forceOfflineProvider)) return;
-      await repository.savePosts(latest);
       state = AsyncData(PostsFeedState(posts: latest));
     } catch (error) {
       if (ref.read(forceOfflineProvider)) return;
