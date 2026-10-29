@@ -27,6 +27,7 @@ class NotesHomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notes = ref.watch(notesProvider);
+    final forceOffline = ref.watch(forceOfflineProvider);
 
     return DefaultTabController(
       length: 2,
@@ -43,8 +44,10 @@ class NotesHomePage extends ConsumerWidget {
             notes.when(
               data: (items) => IconButton(
                 key: const Key('syncNotesButton'),
-                tooltip: 'Sinkronkan catatan',
-                onPressed: items.any((note) => note.dirty)
+                tooltip: forceOffline
+                    ? 'Aktifkan koneksi untuk menyinkronkan catatan'
+                    : 'Sinkronkan catatan',
+                onPressed: !forceOffline && items.any((note) => note.dirty)
                     ? () => _syncNotes(context, ref)
                     : null,
                 icon: const Icon(Icons.cloud_upload_outlined),
@@ -65,13 +68,47 @@ class NotesHomePage extends ConsumerWidget {
             ),
           ],
         ),
-        body: TabBarView(
+        body: Column(
           children: [
-            const PostsTab(),
-            NotesTab(
-              notes: notes,
-              onEdit: (note) => _editNote(context, ref, note: note),
-              onDelete: (note) => _deleteNote(context, ref, note),
+            Material(
+              color: forceOffline
+                  ? Theme.of(context).colorScheme.errorContainer
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  Icon(
+                    forceOffline ? Icons.cloud_off : Icons.cloud_done_outlined,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      forceOffline ? 'Mode offline aktif' : 'Mode online aktif',
+                      key: const Key('connectionModeLabel'),
+                    ),
+                  ),
+                  const Text('Simulasi offline'),
+                  Switch(
+                    key: const Key('forceOfflineSwitch'),
+                    value: forceOffline,
+                    onChanged: (enabled) => ref
+                        .read(forceOfflineProvider.notifier)
+                        .setEnabled(enabled),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  const PostsTab(),
+                  NotesTab(
+                    notes: notes,
+                    onEdit: (note) => _editNote(context, ref, note: note),
+                    onDelete: (note) => _deleteNote(context, ref, note),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

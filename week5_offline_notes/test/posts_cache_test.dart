@@ -40,7 +40,7 @@ class _FakePostsRepository extends PostsRepository {
   @override
   Future<List<Post>> fetchPosts() {
     events.add('fetch');
-    fetchStarted.complete();
+    if (!fetchStarted.isCompleted) fetchStarted.complete();
     return response.future;
   }
 
@@ -75,4 +75,33 @@ void main() {
       expect(refreshed.posts.single.title, 'Fresh');
     },
   );
+
+  test('force offline serves cache until connectivity is restored', () async {
+    final repository = _FakePostsRepository();
+    final container = ProviderContainer(
+      overrides: [postsRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+    container.read(forceOfflineProvider.notifier).setEnabled(true);
+    final subscription = container.listen(postsProvider, (_, _) {});
+    addTearDown(subscription.close);
+
+    final offline = await container.read(postsProvider.future);
+    expect(offline.posts.single.title, 'Cached');
+    expect(offline.isRefreshing, isFalse);
+    expect(repository.events, ['cache']);
+
+    container.read(forceOfflineProvider.notifier).setEnabled(false);
+    await container.pump();
+    await repository.fetchStarted.future;
+    expect(repository.events, ['cache', 'cache', 'fetch']);
+
+    repository.response.complete([repository.latestPost]);
+    await repository.saved.future;
+    await Future<void>.delayed(Duration.zero);
+
+    final online = container.read(postsProvider).requireValue;
+    expect(repository.events, ['cache', 'cache', 'fetch', 'save']);
+    expect(online.posts.single.title, 'Fresh');
+  });
 }

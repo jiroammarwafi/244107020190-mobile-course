@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite/sqflite.dart';
@@ -36,7 +37,9 @@ class _FakePostsRepository extends PostsRepository {
 }
 
 void main() {
-  testWidgets('shows the offline notes and API tabs', (tester) async {
+  testWidgets('shows the tabs and toggles deterministic offline mode', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -50,6 +53,11 @@ void main() {
 
     expect(find.text('Posts API'), findsOneWidget);
     expect(find.text('Catatan'), findsNWidgets(2));
+    expect(find.text('Mode online aktif'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('forceOfflineSwitch')));
+    await tester.pumpAndSettle();
+    expect(find.text('Mode offline aktif'), findsOneWidget);
+
     await tester.tap(find.text('Catatan').first);
     await tester.pumpAndSettle();
     expect(

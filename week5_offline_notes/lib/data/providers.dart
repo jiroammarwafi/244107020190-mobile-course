@@ -12,6 +12,10 @@ import 'sync_notes.dart';
 
 final dioProvider = Provider<Dio>((ref) => createDio());
 
+final forceOfflineProvider = NotifierProvider<ForceOfflineNotifier, bool>(
+  ForceOfflineNotifier.new,
+);
+
 final noteRepositoryProvider = Provider<NoteRepository>(
   (ref) => NoteRepository(),
 );
@@ -27,6 +31,15 @@ final notesProvider = AsyncNotifierProvider<NotesNotifier, List<Note>>(
 final postsProvider = AsyncNotifierProvider<PostsNotifier, PostsFeedState>(
   PostsNotifier.new,
 );
+
+class ForceOfflineNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setEnabled(bool enabled) {
+    state = enabled;
+  }
+}
 
 class NotesNotifier extends AsyncNotifier<List<Note>> {
   @override
@@ -51,6 +64,9 @@ class NotesNotifier extends AsyncNotifier<List<Note>> {
   }
 
   Future<int> sync() async {
+    if (ref.read(forceOfflineProvider)) {
+      throw StateError('Aktifkan koneksi sebelum menyinkronkan catatan.');
+    }
     final repository = ref.read(noteRepositoryProvider);
     final syncedCount = await syncNotes(repository);
     state = AsyncData(await repository.fetchNotes());
@@ -74,7 +90,10 @@ class PostsNotifier extends AsyncNotifier<PostsFeedState> {
   @override
   Future<PostsFeedState> build() async {
     final repository = ref.watch(postsRepositoryProvider);
+    final forceOffline = ref.watch(forceOfflineProvider);
     final cached = await repository.readCachedPosts();
+    if (forceOffline) return PostsFeedState(posts: cached);
+
     unawaited(_refreshInBackground(repository));
     return PostsFeedState(posts: cached, isRefreshing: true);
   }
@@ -82,6 +101,7 @@ class PostsNotifier extends AsyncNotifier<PostsFeedState> {
   Future<void> refresh() async {
     final current = state.asData?.value;
     if (current == null || current.isRefreshing) return;
+    if (ref.read(forceOfflineProvider)) return;
     state = AsyncData(PostsFeedState(posts: current.posts, isRefreshing: true));
     await _fetchAndCache(ref.read(postsRepositoryProvider));
   }
@@ -91,11 +111,15 @@ class PostsNotifier extends AsyncNotifier<PostsFeedState> {
   }
 
   Future<void> _fetchAndCache(PostsRepository repository) async {
+    if (ref.read(forceOfflineProvider)) return;
+
     try {
       final latest = await repository.fetchPosts();
+      if (ref.read(forceOfflineProvider)) return;
       await repository.savePosts(latest);
       state = AsyncData(PostsFeedState(posts: latest));
     } catch (error) {
+      if (ref.read(forceOfflineProvider)) return;
       final current = state.asData?.value;
       if (current == null) return;
       state = AsyncData(
