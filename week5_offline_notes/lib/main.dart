@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'data/local/note.dart';
 import 'data/providers.dart';
 import 'pages/note_detail_page.dart';
+import 'pages/settings_page.dart';
 import 'widgets/note_tile.dart';
 
 final router = GoRouter(
@@ -13,6 +14,10 @@ final router = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) => const NotesHomePage(),
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsPage(),
     ),
     GoRoute(
       path: '/note/:id',
@@ -25,19 +30,33 @@ final router = GoRouter(
 );
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ref.watch(darkModeProvider).value ?? false;
+
     return MaterialApp.router(
       title: 'Offline Notes',
       debugShowCheckedModeBanner: false,
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+          brightness: Brightness.light,
+        ),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+          brightness: Brightness.dark,
+        ),
         useMaterial3: true,
       ),
       routerConfig: router,
@@ -52,6 +71,8 @@ class NotesHomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notes = ref.watch(notesProvider);
     final forceOffline = ref.watch(forceOfflineProvider);
+    final isDark = ref.watch(darkModeProvider).value ?? false;
+    final lastOpened = ref.watch(lastOpenedProvider).value;
 
     return DefaultTabController(
       length: 2,
@@ -65,6 +86,18 @@ class NotesHomePage extends ConsumerWidget {
             ],
           ),
           actions: [
+            IconButton(
+              key: const Key('quickThemeToggleButton'),
+              tooltip: isDark ? 'Beralih ke mode terang' : 'Beralih ke mode gelap',
+              icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode_outlined),
+              onPressed: () => ref.read(darkModeProvider.notifier).toggle(),
+            ),
+            IconButton(
+              key: const Key('settingsButton'),
+              tooltip: 'Pengaturan & Preferensi',
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => context.push('/settings'),
+            ),
             notes.when(
               data: (items) => IconButton(
                 key: const Key('syncNotesButton'),
@@ -122,6 +155,32 @@ class NotesHomePage extends ConsumerWidget {
                 ],
               ),
             ),
+            if (lastOpened != null && lastOpened.isNotEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.history,
+                      size: 13,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Terakhir dibuka: $lastOpened',
+                        key: const Key('lastOpenedLabel'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: TabBarView(
                 children: [

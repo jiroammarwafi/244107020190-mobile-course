@@ -23,4 +23,12 @@ class PrefsRepository {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_lastOpenedKey);
   }
+
+  /// Mengambil waktu buka terakhir sesi sebelumnya, lalu memperbarui ke waktu sekarang.
+  Future<String?> recordAndGetPreviousOpened() async {
+    final prefs = await SharedPreferences.getInstance();
+    final previous = prefs.getString(_lastOpenedKey);
+    await prefs.setString(_lastOpenedKey, DateTime.now().toIso8601String());
+    return previous;
+  }
 }
