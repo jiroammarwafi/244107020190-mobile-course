@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "759661556450",
+    "project_id": "pemmob-firebase",
+    "storage_bucket": "pemmob-firebase.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:759661556450:android:1c69a920523e551071e4bb",
+        "android_client_info": {
+          "package_name": "com.example.campus_notify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSP2Ige5oEUwzX8we9fr6QCtRMH5IiXWk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
